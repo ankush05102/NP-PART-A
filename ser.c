@@ -1,44 +1,35 @@
 #include <stdio.h>
+#include <strings.h>
+#include <sys/types.h>
+#include <arpa/inet.h>
 #include <sys/socket.h>
-#include <netinet/in.h>
-#include <string.h>
-#include <stdlib.h>
+#include<netinet/in.h>
 
-int main(){
-  int udpSocket, nBytes;
-  char buffer[1024];
-  struct sockaddr_in serverAddr, clientAddr;
-  struct sockaddr_storage serverStorage;
-  socklen_t addr_size, client_addr_size;
-  int i;
-
-  /*Create UDP socket*/
-  udpSocket = socket(PF_INET, SOCK_DGRAM, 0);
-
-  /*Configure settings in address struct*/
-  serverAddr.sin_family = AF_INET;
-  serverAddr.sin_port = htons(8893);
-  serverAddr.sin_addr.s_addr = inet_addr("127.0.0.1");
-  memset(serverAddr.sin_zero, '\0', sizeof serverAddr.sin_zero);  
-
-  /*Bind socket with address struct*/
-  bind(udpSocket, (struct sockaddr *) &serverAddr, sizeof(serverAddr));
-
-  /*Initialize size variable to be used later on*/
-  addr_size = sizeof serverStorage;
-
-  while(1){
-    /* Try to receive any incoming UDP datagram. Address and port of 
- *       requesting client will be stored on serverStorage variable */
-    nBytes = recvfrom(udpSocket,buffer,1024,0,(struct sockaddr *)&serverStorage, &addr_size);
-
-    /*Convert message received to uppercase*/
-    for(i=0;i<nBytes-1;i++)
-      buffer[i] = toupper(buffer[i]);
-
-    /*Send uppercase message back to client, using serverStorage as the address*/
-    sendto(udpSocket,buffer,nBytes,0,(struct sockaddr *)&serverStorage,addr_size);
-  }
-
-  return 0;
+int main()
+{
+	int sock,n_bytes;
+	struct sockaddr_in server_addr, client_addr;
+	char *message = "Hello this is server";
+	char buffer[1024];
+	
+	//printf("Enter the message to be sent\n");
+	//scanf("%s",message);
+	
+	sock = socket(AF_INET,SOCK_DGRAM,0);
+	
+	bzero(&server_addr, sizeof(server_addr));
+	server_addr.sin_family = AF_INET;
+	server_addr.sin_port  = htons(5000);
+	server_addr.sin_addr.s_addr =  inet_addr("127.0.0.1");
+	
+	bind(sock,(struct sockaddr *)&server_addr, sizeof(server_addr));
+	
+	n_bytes = sizeof(client_addr);
+	int n = recvfrom(sock,buffer, sizeof(buffer), 0, (struct sockaddr *)&client_addr, &n_bytes);
+	buffer[n] = '\0';
+	puts(buffer);
+	
+	
+	sendto(sock, message, 1024,0,  (struct sockaddr *)&client_addr, n_bytes);
+	
 }
