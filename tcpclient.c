@@ -8,43 +8,36 @@
 #include<netinet/in.h>
 #include<errno.h>
 #include<string.h>
+
 int main()
 {
-	int sock,bytes_recv;
+	int sock;
+	char buffer[1024], message[30];
+	
 	struct sockaddr_in server_addr;
-	char recv_data[1024],send_data[1024];
-	struct hostent *host;
-	host=gethostbyname("127.0.0.1");
-	if((sock=socket(AF_INET,SOCK_STREAM,0))==-1)
-	{
-		perror("socket");
-		exit(1);
-	}
-	server_addr.sin_family=AF_INET;
-	server_addr.sin_port=htons(6119);
-	server_addr.sin_addr.s_addr=inet_addr("127.0.0.1");
-	if(connect(sock,(struct sockaddr *)&server_addr,sizeof(struct sockaddr))==-1)
-	{
-		perror("connect");
-		exit(1);
-	}
-		printf("send Filename to send\n");
-		gets(send_data);
-
-		if(strcmp(send_data,"q")!=0)
-			send(sock,send_data,strlen(send_data),0);
-		
-		while((bytes_recv=recv(sock,recv_data,1024,0))>0)
-		{
-			recv_data[bytes_recv]='\0';
-			//printf("%s\n\n", recv_data);
-			//if(strcmp(recv_data,"q")==0)
-		//	{
-		//	close(sock);
-		//	break;
-		//	}
-			printf("%s\n", recv_data);
-		}
-	close(sock);	
-	return 0;
+	struct hostent* host;
+	host = gethostbyname("127.0.0.1");
+	
+	if((sock = socket(AF_INET,SOCK_STREAM,0))==-1)
+	{perror("Socket"); exit(1);}
+	
+	server_addr.sin_family = AF_INET;
+	server_addr.sin_port =  htons(6119);
+	server_addr.sin_addr.s_addr = inet_addr("127.0.0.1");
+	
+	if(connect(sock, (struct sockaddr *)&server_addr, sizeof(struct sockaddr)) == -1)
+	{perror("Connection"); exit(1); }
+	
+	bzero(buffer,1024);
+	printf("Enter the message you want to send from client\n");
+	scanf("%s",message);
+	strcpy(buffer, message);
+	printf("Client : %s\n",buffer);
+	send(sock, buffer, strlen(buffer), 0);
+	
+	bzero(buffer, 1024);
+	recv(sock, buffer, 1024, 0);
+	printf("Server : %s\n", buffer);
+	
+	close(sock);
 }
