@@ -7,73 +7,44 @@
 #include<unistd.h>
 #include<netinet/in.h>
 #include<string.h>
+
 int main()
 {
-	struct sockaddr_in server_addr;
-	struct sockaddr_in client_addr;
-	FILE *fptr;
-	int sock,connected,bytes_recv;
-	char ch,send_data[1024],recv_data[1024];
-	int sin_size,flag = 0;
-
-
-	if((sock=socket(AF_INET,SOCK_STREAM,0))==-1)
-	{
-		perror("socket");
-		exit(1);
-	}
-
-
-	server_addr.sin_family=AF_INET;
-	server_addr.sin_port=htons(6119);
-	server_addr.sin_addr.s_addr=inet_addr("127.0.0.1");
-
-	if(bind(sock,(struct sockaddr *)&server_addr, sizeof(struct sockaddr))==-1)
-	{
-		perror("unable to bind");
-		exit(1);
-	}
-
-	if(listen(sock,5)==-1)
-	{
-		perror("lsten");
-		exit(1);
-	}
-
-	printf("tcp server is waiting for client on port XXXX\n");
-	sin_size=sizeof(struct sockaddr_in);
-	connected=accept(sock,(struct sockaddr *)&client_addr,&sin_size);
-
+	int sock,connected,sin_bytes;
+	struct sockaddr_in server_addr, client_addr;
+	char buffer[1024];
+	
+	if((sock = socket(AF_INET,SOCK_STREAM,0)) ==-1)
+	{perror("Socket"); exit(1);}
+	
+	memset(&server_addr,'\0',sizeof(server_addr));
+	server_addr.sin_family = AF_INET;
+	server_addr.sin_port = htons(6119);
+	server_addr.sin_addr.s_addr = inet_addr("127.0.0.1");
+	
+	if(bind(sock, (struct sockaddr *)&server_addr, sizeof(struct sockaddr)) == -1)
+	{perror("Bind"); exit(1);}
+	
+	if(listen(sock,5))
+	{perror("Listen"); exit(1);}
+	printf("Server is Listening...\n");
+	
 	while(1)
 	{
+		sin_bytes = sizeof(struct sockaddr_in);
+		if((connected = accept(sock,(struct sockaddr *)&client_addr, &sin_bytes)) == -1)
+		{perror("Connection"); exit(1);}
 		
-		bytes_recv=recv(connected,recv_data,1024,0);
-		recv_data[bytes_recv]='\0';
-
-		printf("reciecved data is %s\n\n\n",recv_data);
+		bzero(buffer, 1024);
+		recv(connected, buffer, 1024,0);
+		printf("Client : %s\n",buffer);
 		
+		bzero(buffer,1024);
+		strcpy(buffer,"HI");
+		printf("Server :%s\n",buffer);
+		send(connected, buffer, strlen(buffer),0);
 		
-		fptr=fopen(recv_data,"r");
-		if(fptr==NULL)
-		{
-			strcpy(send_data,"FILE");
-			send(connected,send_data,strlen(send_data),0);
-		}
-		ch = fgetc(fptr);
-
-		while(ch != EOF)//this loop searches the for the current word
-		{
-		   // fscanf(fptr,"%s",send_data);
-			send_data[flag] = ch;
-			flag++;
-			ch = fgetc(fptr);
-		   //send(connected,send_data,strlen(send_data),0);
-		}
-			send(connected,send_data,strlen(send_data),0);
-			//send_data[0] = 'q';
-			//strcpy(send_data,"q");
-			//send(connected,send_data,strlen(send_data),0);
-			close(connected);
-			break;
+		close(connected);
+	
 	}
 }
